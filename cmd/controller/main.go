@@ -20,16 +20,10 @@ import (
 func main() {
 	fmt.Println("NamespaceCleaner Controller Starting...\n")
 
-	// Step 4: Create a client to list resources
-	client, err := createClient()
+	// Step 4: Create clients
+	client, k8sClient, err := createClients()
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Also create standard Kubernetes client for namespace operations
-	k8sClient, err := createK8sClient()
-	if err != nil {
-		log.Fatalf("Failed to create Kubernetes client: %v", err)
+		log.Fatalf("Failed to create clients: %v", err)
 	}
 
 	// Test listing NamespaceCleaner resources (Step 4)
@@ -44,8 +38,8 @@ func main() {
 	startReconcileLoop(client, k8sClient)
 }
 
-// createClient creates a Kubernetes client using kubeconfig
-func createClient() (clientset.Interface, error) {
+// createClients creates both custom and standard Kubernetes clients
+func createClients() (clientset.Interface, kubernetes.Interface, error) {
 	var config *rest.Config
 	var err error
 
@@ -56,42 +50,22 @@ func createClient() (clientset.Interface, error) {
 		kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create config: %v", err)
+			return nil, nil, fmt.Errorf("failed to create config: %v", err)
 		}
 	}
 
-	// Create the clientset using our generated client
-	client, err := clientset.NewForConfig(config)
+	// Create both clients using the same config
+	customClient, err := clientset.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create clientset: %v", err)
+		return nil, nil, fmt.Errorf("failed to create custom clientset: %v", err)
 	}
 
-	return client, nil
-}
-
-// createK8sClient creates a standard Kubernetes client for namespace operations
-func createK8sClient() (kubernetes.Interface, error) {
-	var config *rest.Config
-	var err error
-
-	// Try in-cluster config first, then fall back to kubeconfig
-	config, err = rest.InClusterConfig()
+	k8sClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		// We're not in cluster, use kubeconfig
-		kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create config: %v", err)
-		}
+		return nil, nil, fmt.Errorf("failed to create kubernetes clientset: %v", err)
 	}
 
-	// Create the standard Kubernetes clientset
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kubernetes clientset: %v", err)
-	}
-
-	return client, nil
+	return customClient, k8sClient, nil
 }
 
 // listNamespaceCleaners demonstrates using the client to list our custom resources

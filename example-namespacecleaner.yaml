@@ -1,0 +1,9 @@
+apiVersion: clusterops.io/v1alpha1
+kind: NamespaceCleaner
+metadata:
+  name: my-cleaner
+spec:
+  schedule: "0 2 * * *"
+  selector:
+    matchLabels:
+      environment: "test"

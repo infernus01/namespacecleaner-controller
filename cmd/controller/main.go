@@ -20,21 +20,21 @@ import (
 func main() {
 	fmt.Println("NamespaceCleaner Controller Starting...\n")
 
-	// Step 4: Create clients
+	// Create clients
 	client, k8sClient, err := createClients()
 	if err != nil {
 		log.Fatalf("Failed to create clients: %v", err)
 	}
 
-	// Test listing NamespaceCleaner resources (Step 4)
-	fmt.Println("=== Step 4: Testing Client ===")
+	// listing NamespaceCleaner resources
+	fmt.Println("=== Testing Client ===")
 	err = listNamespaceCleaners(client)
 	if err != nil {
 		log.Fatalf("Failed to list NamespaceCleaners: %v", err)
 	}
 
-	// Step 5: Start the loop-based reconciler
-	fmt.Println("=== Step 5: Starting Loop-Based Reconciler ===")
+	// Starting the reconciler
+	fmt.Println("=== Starting the Reconciler ===")
 	startReconcileLoop(client, k8sClient)
 }
 
@@ -68,9 +68,9 @@ func createClients() (clientset.Interface, kubernetes.Interface, error) {
 	return customClient, k8sClient, nil
 }
 
-// listNamespaceCleaners demonstrates using the client to list our custom resources
+// listNamespaceCleaners to list our custom resources
 func listNamespaceCleaners(client clientset.Interface) error {
-	fmt.Println("📋 Listing NamespaceCleaner resources...")
+	fmt.Println("Listing NamespaceCleaner resources...")
 
 	// List all NamespaceCleaner resources (cluster-scoped)
 	namespacecleaners, err := client.ClusteropsV1alpha1().NamespaceCleaners().List(context.TODO(), metav1.ListOptions{})
@@ -80,9 +80,8 @@ func listNamespaceCleaners(client clientset.Interface) error {
 
 	fmt.Printf("Found %d NamespaceCleaner resources:\n", len(namespacecleaners.Items))
 
-	// Print details of each resource
 	for _, nc := range namespacecleaners.Items {
-		fmt.Printf("  🧹 Name: %s\n", nc.Name)
+		fmt.Printf("     Name: %s\n", nc.Name)
 		fmt.Printf("     Schedule: %s\n", nc.Spec.Schedule)
 		fmt.Printf("     Selector: %+v\n", nc.Spec.Selector)
 		fmt.Println()
@@ -91,12 +90,12 @@ func listNamespaceCleaners(client clientset.Interface) error {
 	return nil
 }
 
-// startReconcileLoop implements Step 5 - a simple loop-based reconciler
+// Simple loop-based reconciler
 func startReconcileLoop(client clientset.Interface, k8sClient kubernetes.Interface) {
 	fmt.Println("Starting reconcile loop (every 30 seconds)...")
 
 	for {
-		fmt.Println("\n--- Reconcile Cycle Started ---")
+		fmt.Println("\n--- Reconcillation Started ---")
 
 		// Get all NamespaceCleaner resources
 		namespacecleaners, err := client.ClusteropsV1alpha1().NamespaceCleaners().List(context.TODO(), metav1.ListOptions{})
@@ -112,22 +111,22 @@ func startReconcileLoop(client clientset.Interface, k8sClient kubernetes.Interfa
 			}
 		}
 
-		fmt.Println("--- Reconcile Cycle Completed ---")
+		fmt.Println("--- Reconcillation Completed ---")
 
-		// Wait 30 seconds before next cycle
+		// Waits 30 seconds before next cycle
 		time.Sleep(30 * time.Second)
 	}
 }
 
-// reconcileNamespaceCleaner processes a single NamespaceCleaner resource
+// to process a single NamespaceCleaner resource
 func reconcileNamespaceCleaner(nc v1alpha1.NamespaceCleaner, k8sClient kubernetes.Interface) error {
 
 	fmt.Printf("Processing NamespaceCleaner: %s\n", nc.Name)
 	fmt.Printf("Schedule: %s\n", nc.Spec.Schedule)
 
-	// Simple logic: if selector has labels, find matching namespaces
+	// If selector has labels, find matching namespaces
 	if len(nc.Spec.Selector.MatchLabels) > 0 {
-		fmt.Printf("Looking for namespaces with labels: %+v\n", nc.Spec.Selector.MatchLabels)
+		fmt.Printf("Looking for namespaces with labels: %v\n", nc.Spec.Selector.MatchLabels)
 
 		// List all namespaces
 		namespaces, err := k8sClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})

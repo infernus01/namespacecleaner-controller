@@ -22,14 +22,9 @@ setup: install-kind apply-crd apply-cr
 	@echo "Setup complete!"
 	@kubectl get namespacecleaners
 
-# Test the client (Step 4)
-test-client:
-	@echo "Testing client..."
-	go run cmd/controller/main.go
-
-# Run the full controller (Step 5) 
+# Run the controller (Steps 4 + 5)
 run-controller:
-	@echo "Running the loop-based controller..."
+	@echo "Running the controller..."
 	go run cmd/controller/main.go
 
 # Create test namespaces for demonstration

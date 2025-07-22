@@ -1,0 +1,9 @@
+apiVersion: clusterops.io/v1alpha1
+kind: NamespaceCleaner
+metadata:
+  name: staging-cleaner
+spec:
+  schedule: "0 3 * * *"
+  selector:
+    matchLabels:
+      environment: "staging" 

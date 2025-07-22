@@ -22,7 +22,7 @@ setup: install-kind apply-crd apply-cr
 	@echo "Setup complete!"
 	@kubectl get namespacecleaners
 
-# Run the controller (Steps 4 + 5)
+# Run the controller
 run-controller:
 	@echo "Running the controller..."
 	go run cmd/controller/main.go

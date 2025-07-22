@@ -1,3 +1,26 @@
+/*
+WHAT:
+- Reads NamespaceCleaner custom resources from Kubernetes
+- Finds namespaces that match the label selectors
+- Deletes those namespaces automatically
+- Runs continuously every 30 seconds
+
+HOW:
+1. Create two API clients (custom + standard Kubernetes)
+2. List all NamespaceCleaner resources to show they work
+3. Start loop that:
+   - Gets all NamespaceCleaner resources
+   - For each resource, find matching namespaces and delete them
+   - Wait 30 seconds and repeat
+
+EXAMPLE:
+User creates: NamespaceCleaner with selector "environment: test"
+Controller finds: test-env-1, test-env-2 namespaces with that label
+Controller deletes: Both namespaces
+Controller waits: 30 seconds
+Controller repeats: The whole process again
+*/
+
 package main
 
 import (
@@ -20,7 +43,9 @@ import (
 func main() {
 	fmt.Println("NamespaceCleaner Controller Starting...\n")
 
-	// Create clients
+	// Get access to Kubernetes API
+	// client: talks to our custom NamespaceCleaner resources
+	// k8sClient: talks to standard Kubernetes resources (like namespaces)
 	client, k8sClient, err := createClients()
 	if err != nil {
 		log.Fatalf("Failed to create clients: %v", err)
@@ -33,7 +58,7 @@ func main() {
 		log.Fatalf("Failed to list NamespaceCleaners: %v", err)
 	}
 
-	// Starting the reconciler
+	// The controller logic, watch → match → delete → repeat
 	fmt.Println("=== Starting the Reconciler ===")
 	startReconcileLoop(client, k8sClient)
 }

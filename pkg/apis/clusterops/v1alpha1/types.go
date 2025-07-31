@@ -19,10 +19,7 @@ type NamespaceCleaner struct {
 
 // what the cleaner should do
 type NamespaceCleanerSpec struct {
-	// Schedule when to run cleanup (cron format)
-	Schedule string `json:"schedule,omitempty"`
-
-	// Selector which namespaces to clean up
+	// Selector which namespaces to scan for old pods
 	Selector metav1.LabelSelector `json:"selector,omitempty"`
 }
 

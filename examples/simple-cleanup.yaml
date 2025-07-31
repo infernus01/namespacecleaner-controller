@@ -1,0 +1,8 @@
+apiVersion: clusterops.io/v1alpha1
+kind: NamespaceCleaner
+metadata:
+  name: simple-cleanup
+spec:
+  selector:
+    matchLabels:
+      environment: "test"

@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespacecleaner-controller
+  namespace: namespacecleaner-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: namespacecleaner-controller
+rules:
+- apiGroups: [""]
+  resources: ["namespaces", "pods"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["clusterops.io"]
+  resources: ["namespacecleaners"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: namespacecleaner-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: namespacecleaner-controller
+subjects:
+- kind: ServiceAccount
+  name: namespacecleaner-controller
+  namespace: namespacecleaner-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: namespacecleaner-controller
+  namespace: namespacecleaner-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: namespacecleaner-controller
+  template:
+    metadata:
+      labels:
+        app: namespacecleaner-controller
+    spec:
+      serviceAccountName: namespacecleaner-controller
+      containers:
+      - name: controller
+        image: ko://github.com/infernus01/knative-demo/cmd/controller
+        env:
+        - name: SYSTEM_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace 

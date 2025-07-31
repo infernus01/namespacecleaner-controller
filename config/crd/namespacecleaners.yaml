@@ -15,12 +15,9 @@ spec:
             spec:
               type: object
               properties:
-                schedule:
-                  type: string
-                  description: "When to run cleanup (cron format)"
                 selector:
                   type: object
-                  description: "Which namespaces to clean up"
+                  description: "Which namespaces to scan for old pods"
                   x-kubernetes-preserve-unknown-fields: true
             status:
               type: object

@@ -1,6 +1,6 @@
 # Basic Makefile for NamespaceCleaner CRD
 
-.PHONY: install-kind apply-crd apply-cr setup clean
+.PHONY: install-kind apply-crd apply-cr setup clean deploy-namespacecleaner build-image deploy-ko
 
 # Install kind cluster
 install-kind:
@@ -41,8 +41,14 @@ create-test-namespaces:
 	@kubectl create namespace test-env-2 --dry-run=client -o yaml | kubectl label --local -f - environment=staging -o yaml | kubectl apply -f -
 	@kubectl create namespace prod-env --dry-run=client -o yaml | kubectl label --local -f - environment=prod -o yaml | kubectl apply -f -
 
+# Deploy using ko (alternative)
+deploy-ko:
+	@echo "Deploying namespacecleaner controller using ko..."
+	@KIND_CLUSTER_NAME=namespacecleaner-demo KO_DOCKER_REPO=kind.local ko apply -f config/deploy/
+
 # Clean up everything (cluster)
 clean:
 	@echo "Cleaning up..."
 	@kubectl delete namespacecleaners --all || echo "No NamespaceCleaner resources to delete"
+	@kubectl delete namespace namespacecleaner-system --ignore-not-found=true
 	@kind get clusters | grep -q namespacecleaner-demo && kind delete cluster --name namespacecleaner-demo || echo "Cluster 'namespacecleaner-demo' not found"

@@ -1,4 +1,57 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: namespacecleaner-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-logging
+  namespace: namespacecleaner-system
+data:
+  loglevel.controller: "info"
+  loglevel.webhook: "info"
+  zap-logger-config: |
+    {
+      "level": "info",
+      "development": false,
+      "outputPaths": ["stdout"],
+      "errorOutputPaths": ["stderr"],
+      "encoding": "json",
+      "encoderConfig": {
+        "timeKey": "ts",
+        "levelKey": "level",
+        "nameKey": "logger",
+        "callerKey": "caller",
+        "messageKey": "msg",
+        "stacktraceKey": "stacktrace",
+        "lineEnding": "",
+        "levelEncoder": "",
+        "timeEncoder": "iso8601",
+        "durationEncoder": "",
+        "callerEncoder": ""
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-observability
+  namespace: namespacecleaner-system
+data:
+  _example: |
+    ################################
+    #                              #
+    #    EXAMPLE CONFIGURATION     #
+    #                              #
+    ################################
+    # This is an example of metrics configuration
+  metrics.backend-destination: prometheus
+  metrics.request-metrics-backend-destination: prometheus
+  metrics.stackdriver-project-id: ""
+  profiling.enable: "false"
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: namespacecleaner-controller
@@ -9,12 +62,18 @@ kind: ClusterRole
 metadata:
   name: namespacecleaner-controller
 rules:
-- apiGroups: [""]
-  resources: ["namespaces", "pods"]
-  verbs: ["get", "list", "delete"]
-- apiGroups: ["clusterops.io"]
-  resources: ["namespacecleaners"]
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["namespaces", "pods", "configmaps", "events"]
+    verbs: ["get", "list", "delete", "create", "update", "patch", "watch"]
+  - apiGroups: ["clusterops.io"]
+    resources: ["namespacecleaners"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["clusterops.io"]
+    resources: ["namespacecleaners/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -25,9 +84,9 @@ roleRef:
   kind: ClusterRole
   name: namespacecleaner-controller
 subjects:
-- kind: ServiceAccount
-  name: namespacecleaner-controller
-  namespace: namespacecleaner-system
+  - kind: ServiceAccount
+    name: namespacecleaner-controller
+    namespace: namespacecleaner-system
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -46,10 +105,16 @@ spec:
     spec:
       serviceAccountName: namespacecleaner-controller
       containers:
-      - name: controller
-        image: ko://github.com/infernus01/knative-demo/cmd/controller
-        env:
-        - name: SYSTEM_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace 
+        - name: controller
+          image: ko://github.com/infernus01/knative-demo/cmd/controller
+          env:
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_LOGGING_NAME
+              value: config-logging
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: config-observability
+            - name: METRICS_DOMAIN
+              value: clusterops.io/namespacecleaner

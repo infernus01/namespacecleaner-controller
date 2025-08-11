@@ -3,8 +3,7 @@ kind: NamespaceCleaner
 metadata:
   name: temp-cleaner
 spec:
-  schedule: "*/15 * * * *"
   selector:
     matchLabels:
       temporary: "true"
-      team: "qa" 
+      team: "qa"
